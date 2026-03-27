@@ -18,7 +18,7 @@ if [ ! -f middleware.env ]; then
   fi
 fi
 
-docker compose -f docker-compose.middleware.yaml --profile weaviate -p dify up -d
+docker compose -f docker-compose.middleware.yaml --profile weaviate -p dify-middleware up -d
 
 echo
 echo "Middleware is starting."

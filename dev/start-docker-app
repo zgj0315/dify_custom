@@ -12,7 +12,7 @@ if [ ! -f "$DOCKER_DIR/app.env.localbuild" ] && [ -f "$DOCKER_DIR/app.env.localb
 fi
 
 cd "$DOCKER_DIR"
-docker compose -f docker-compose.local-build.yaml up -d --build
+docker compose -f docker-compose.local-build.yaml -p dify-app up -d --build
 
 echo
 echo "Application stack is starting."

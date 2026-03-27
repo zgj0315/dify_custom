@@ -159,7 +159,7 @@
 
 使用已有文件：
 
-- `docker compose -f docker/docker-compose.middleware.yaml --profile weaviate -p dify up -d`
+- `docker compose -f docker/docker-compose.middleware.yaml --profile weaviate -p dify-middleware up -d`
 
 ### 5.2 构建并启动应用层
 
@@ -169,7 +169,7 @@
 
 启动命令：
 
-- `docker compose -f docker/docker-compose.local-build.yaml up -d --build`
+- `docker compose -f docker/docker-compose.local-build.yaml -p dify-app up -d --build`
 
 这样分层的好处：
 

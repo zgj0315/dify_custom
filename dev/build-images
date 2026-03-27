@@ -12,5 +12,4 @@ if [ ! -f "$DOCKER_DIR/app.env.localbuild" ] && [ -f "$DOCKER_DIR/app.env.localb
 fi
 
 cd "$DOCKER_DIR"
-docker compose -f docker-compose.local-build.yaml build api worker worker_beat web
-
+docker compose -f docker-compose.local-build.yaml -p dify-app build api worker worker_beat web

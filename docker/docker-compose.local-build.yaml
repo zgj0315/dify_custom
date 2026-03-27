@@ -105,7 +105,7 @@ services:
 networks:
   middleware_default:
     external: true
-    name: dify_default
+    name: dify-middleware_default
   middleware_ssrf_proxy:
     external: true
-    name: dify_ssrf_proxy_network
+    name: dify-middleware_ssrf_proxy_network
