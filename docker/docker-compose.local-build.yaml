@@ -1,0 +1,113 @@
+services:
+  api:
+    image: dify-custom-api:local
+    build:
+      context: ../api
+      dockerfile: Dockerfile
+    restart: always
+    env_file:
+      - ./app.env.localbuild
+    environment:
+      MODE: api
+      EDITION: SELF_HOSTED
+      DEPLOY_ENV: PRODUCTION
+      INNER_API_KEY_FOR_PLUGIN: ${PLUGIN_DIFY_INNER_API_KEY:-QaHbTe77CtuXmsfyhR7+vRjI/+XbV1AaFy691iy+kGDv2Jvy0/eAh8Y1}
+      PLUGIN_REMOTE_INSTALL_HOST: host.docker.internal
+      PLUGIN_REMOTE_INSTALL_PORT: ${EXPOSE_PLUGIN_DEBUGGING_PORT:-5003}
+    volumes:
+      - ./volumes/app/storage:/app/api/storage
+    ports:
+      - "5001:5001"
+    networks:
+      - middleware_default
+      - middleware_ssrf_proxy
+
+  worker:
+    image: dify-custom-api:local
+    build:
+      context: ../api
+      dockerfile: Dockerfile
+    restart: always
+    env_file:
+      - ./app.env.localbuild
+    environment:
+      MODE: worker
+      EDITION: SELF_HOSTED
+      DEPLOY_ENV: PRODUCTION
+      INNER_API_KEY_FOR_PLUGIN: ${PLUGIN_DIFY_INNER_API_KEY:-QaHbTe77CtuXmsfyhR7+vRjI/+XbV1AaFy691iy+kGDv2Jvy0/eAh8Y1}
+    volumes:
+      - ./volumes/app/storage:/app/api/storage
+    networks:
+      - middleware_default
+      - middleware_ssrf_proxy
+
+  worker_beat:
+    image: dify-custom-api:local
+    build:
+      context: ../api
+      dockerfile: Dockerfile
+    restart: always
+    env_file:
+      - ./app.env.localbuild
+    environment:
+      MODE: beat
+      EDITION: SELF_HOSTED
+      DEPLOY_ENV: PRODUCTION
+    volumes:
+      - ./volumes/app/storage:/app/api/storage
+    networks:
+      - middleware_default
+      - middleware_ssrf_proxy
+
+  web:
+    image: dify-custom-web:local
+    build:
+      context: ../web
+      dockerfile: Dockerfile
+    restart: always
+    env_file:
+      - ./app.env.localbuild
+    environment:
+      PORT: 3000
+      EDITION: SELF_HOSTED
+      DEPLOY_ENV: PRODUCTION
+    ports:
+      - "3000:3000"
+    networks:
+      - middleware_default
+
+  nginx:
+    image: nginx:latest
+    restart: always
+    env_file:
+      - ./app.env.localbuild
+    depends_on:
+      - api
+      - web
+    volumes:
+      - ./nginx/nginx.conf.template:/etc/nginx/nginx.conf.template
+      - ./nginx/proxy.conf.template:/etc/nginx/proxy.conf.template
+      - ./nginx/https.conf.template:/etc/nginx/https.conf.template
+      - ./nginx/conf.d:/etc/nginx/conf.d
+      - ./nginx/docker-entrypoint.sh:/docker-entrypoint-mount.sh
+      - ./nginx/ssl:/etc/ssl
+      - ./volumes/certbot/conf/live:/etc/letsencrypt/live
+      - ./volumes/certbot/conf:/etc/letsencrypt
+      - ./volumes/certbot/www:/var/www/html
+    entrypoint:
+      - sh
+      - -c
+      - cp /docker-entrypoint-mount.sh /docker-entrypoint.sh && sed -i 's/\r$$//' /docker-entrypoint.sh && chmod +x /docker-entrypoint.sh && /docker-entrypoint.sh
+    ports:
+      - "${EXPOSE_NGINX_PORT:-80}:${NGINX_PORT:-80}"
+      - "${EXPOSE_NGINX_SSL_PORT:-443}:${NGINX_SSL_PORT:-443}"
+    networks:
+      - middleware_default
+
+networks:
+  middleware_default:
+    external: true
+    name: dify_default
+  middleware_ssrf_proxy:
+    external: true
+    name: dify_ssrf_proxy_network

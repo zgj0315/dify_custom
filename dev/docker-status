@@ -1,0 +1,16 @@
+#!/bin/bash
+
+set -euo pipefail
+
+SCRIPT_DIR="$(dirname "$(realpath "$0")")"
+ROOT_DIR="$SCRIPT_DIR/.."
+DOCKER_DIR="$ROOT_DIR/docker"
+
+cd "$DOCKER_DIR"
+
+echo "[middleware]"
+docker compose -f docker-compose.middleware.yaml -p dify ps
+
+echo
+echo "[application]"
+docker compose -f docker-compose.local-build.yaml ps

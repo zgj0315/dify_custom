@@ -1,0 +1,16 @@
+#!/bin/bash
+
+set -euo pipefail
+
+SCRIPT_DIR="$(dirname "$(realpath "$0")")"
+ROOT_DIR="$SCRIPT_DIR/.."
+DOCKER_DIR="$ROOT_DIR/docker"
+
+if [ ! -f "$DOCKER_DIR/app.env.localbuild" ] && [ -f "$DOCKER_DIR/app.env.localbuild.example" ]; then
+  cp "$DOCKER_DIR/app.env.localbuild.example" "$DOCKER_DIR/app.env.localbuild"
+  echo "Created docker/app.env.localbuild from docker/app.env.localbuild.example"
+fi
+
+cd "$DOCKER_DIR"
+docker compose -f docker-compose.local-build.yaml build api worker worker_beat web
+
