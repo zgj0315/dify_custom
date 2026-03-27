@@ -1,9 +1,51 @@
 #!/bin/bash
 
+set -euo pipefail
 set -x
 
 SCRIPT_DIR="$(dirname "$(realpath "$0")")"
 cd "$SCRIPT_DIR/.."
+
+if [ ! -f api/.env ]; then
+  if [ -f api/.env.localdev.example ]; then
+    cp api/.env.localdev.example api/.env
+    echo "Created api/.env from api/.env.localdev.example"
+  else
+    echo "Missing api/.env. Copy api/.env.example or api/.env.localdev.example first."
+    exit 1
+  fi
+fi
+
+sync_env_value() {
+  local source_file="$1"
+  local target_file="$2"
+  local key="$3"
+
+  if [ ! -f "$source_file" ] || [ ! -f "$target_file" ]; then
+    return
+  fi
+
+  local source_line
+  source_line="$(grep -E "^${key}=" "$source_file" | tail -n 1 || true)"
+  if [ -z "$source_line" ]; then
+    return
+  fi
+
+  if grep -qE "^${key}=" "$target_file"; then
+    sed -i.bak "s|^${key}=.*|${source_line}|" "$target_file"
+  else
+    printf '\n%s\n' "$source_line" >> "$target_file"
+  fi
+
+  rm -f "${target_file}.bak"
+}
+
+sync_env_value docker/middleware.env api/.env PLUGIN_DAEMON_URL
+sync_env_value docker/middleware.env api/.env PLUGIN_DAEMON_KEY
+sync_env_value docker/middleware.env api/.env PLUGIN_DIFY_INNER_API_KEY
+
+uv --directory api run \
+  flask upgrade-db
 
 
 uv --directory api run \

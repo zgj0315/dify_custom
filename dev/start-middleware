@@ -1,0 +1,31 @@
+#!/bin/bash
+
+set -euo pipefail
+
+SCRIPT_DIR="$(dirname "$(realpath "$0")")"
+ROOT_DIR="$SCRIPT_DIR/.."
+DOCKER_DIR="$ROOT_DIR/docker"
+
+cd "$DOCKER_DIR"
+
+if [ ! -f middleware.env ]; then
+  if [ -f middleware.env.localdev.example ]; then
+    cp middleware.env.localdev.example middleware.env
+    echo "Created docker/middleware.env from middleware.env.localdev.example"
+  else
+    cp middleware.env.example middleware.env
+    echo "Created docker/middleware.env from middleware.env.example"
+  fi
+fi
+
+docker compose -f docker-compose.middleware.yaml --profile weaviate -p dify up -d
+
+echo
+echo "Middleware is starting."
+echo "Exposed services:"
+echo "  postgres   -> localhost:5432"
+echo "  redis      -> localhost:6379"
+echo "  weaviate   -> localhost:8080"
+echo "  sandbox    -> localhost:8194"
+echo "  plugin     -> localhost:5002"
+echo "  plugin dbg -> localhost:5003"

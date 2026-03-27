@@ -1,0 +1,22 @@
+#!/bin/bash
+
+set -euo pipefail
+
+SCRIPT_DIR="$(dirname "$(realpath "$0")")"
+ROOT_DIR="$SCRIPT_DIR/.."
+WEB_DIR="$ROOT_DIR/web"
+
+cd "$WEB_DIR"
+
+if [ ! -f .env.local ]; then
+  if [ -f .env.localdev.example ]; then
+    cp .env.localdev.example .env.local
+    echo "Created web/.env.local from .env.localdev.example"
+  else
+    cp .env.example .env.local
+    echo "Created web/.env.local from .env.example"
+  fi
+fi
+
+pnpm install
+pnpm dev

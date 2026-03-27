@@ -1,0 +1,34 @@
+#!/bin/bash
+
+set -euo pipefail
+
+SCRIPT_DIR="$(dirname "$(realpath "$0")")"
+ROOT_DIR="$SCRIPT_DIR/.."
+
+echo "Step 1/4: start middleware containers"
+"$SCRIPT_DIR/start-middleware"
+
+echo
+if [ ! -f "$ROOT_DIR/api/.env" ] && [ -f "$ROOT_DIR/api/.env.localdev.example" ]; then
+  cp "$ROOT_DIR/api/.env.localdev.example" "$ROOT_DIR/api/.env"
+  echo "Created api/.env from api/.env.localdev.example"
+fi
+
+if [ ! -f "$ROOT_DIR/web/.env.local" ] && [ -f "$ROOT_DIR/web/.env.localdev.example" ]; then
+  cp "$ROOT_DIR/web/.env.localdev.example" "$ROOT_DIR/web/.env.local"
+  echo "Created web/.env.local from web/.env.localdev.example"
+fi
+
+cat <<'EOF'
+
+Next terminals:
+  1. API     -> ./dev/start-api      (runs DB migration first)
+  2. Worker  -> ./dev/start-worker
+  3. Web     -> ./dev/start-web
+  4. Beat    -> ./dev/start-beat   (optional)
+
+Suggested entry points:
+  Web UI     -> http://localhost:3000
+  API        -> http://localhost:5001
+  Weaviate   -> http://localhost:8080
+EOF

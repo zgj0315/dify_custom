@@ -1,0 +1,19 @@
+#!/bin/bash
+
+set -euo pipefail
+
+SCRIPT_DIR="$(dirname "$(realpath "$0")")"
+cd "$SCRIPT_DIR/.."
+
+if [ ! -f api/.env ]; then
+  if [ -f api/.env.localdev.example ]; then
+    cp api/.env.localdev.example api/.env
+    echo "Created api/.env from api/.env.localdev.example"
+  else
+    echo "Missing api/.env. Copy api/.env.example or api/.env.localdev.example first."
+    exit 1
+  fi
+fi
+
+uv --directory api run \
+  celery -A app.celery beat --loglevel INFO
