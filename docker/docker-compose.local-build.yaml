@@ -71,8 +71,6 @@ services:
       PORT: 3000
       EDITION: SELF_HOSTED
       DEPLOY_ENV: PRODUCTION
-    ports:
-      - "3000:3000"
     networks:
       - middleware_default
 

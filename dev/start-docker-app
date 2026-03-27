@@ -18,6 +18,4 @@ echo
 echo "Application stack is starting."
 echo "Direct access:"
 echo "  api       -> http://localhost:5001"
-echo "  web       -> http://localhost:3000"
 echo "  nginx     -> http://localhost"
-

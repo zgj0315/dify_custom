@@ -26,9 +26,9 @@
 
 替换为基于当前源码 `build` 出来的自定义镜像。
 
-## 3. 推荐方案
+## 3. 实现方案
 
-推荐采用“两层编排”：
+已按“两层编排”落地：
 
 ### 3.1 中间件层
 
@@ -49,9 +49,9 @@
 
 ### 3.2 应用层
 
-新增一份“源码构建版”的 compose，例如：
+已新增源码构建版 compose：
 
-- `docker/docker-compose.local-build.yaml`
+- [docker/docker-compose.local-build.yaml](/Users/zhaoguangjian/github/zgj0315/dify_custom/docker/docker-compose.local-build.yaml)
 
 该文件只负责应用相关容器：
 
@@ -132,7 +132,8 @@
 关键点：
 
 - 容器内访问 API 应该走 `http://api:5001`
-- 对外暴露前端可通过 `nginx` 或直接映射 `3000`
+- 不再直接对外暴露宿主机 `3000`
+- 统一通过 `nginx` 暴露前端页面
 
 ### 4.5 nginx
 
@@ -162,9 +163,13 @@
 
 ### 5.2 构建并启动应用层
 
-新增应用层 compose，例如：
+已实现的应用层 compose：
 
-- `docker compose -f docker/docker-compose.local-build.yaml -p dify-app up -d --build`
+- [docker/docker-compose.local-build.yaml](/Users/zhaoguangjian/github/zgj0315/dify_custom/docker/docker-compose.local-build.yaml)
+
+启动命令：
+
+- `docker compose -f docker/docker-compose.local-build.yaml up -d --build`
 
 这样分层的好处：
 
@@ -174,9 +179,9 @@
 
 ## 6. 环境变量设计
 
-建议新增一份专用于“本地源码构建容器运行”的环境模板，例如：
+已新增专用于“本地源码构建容器运行”的环境模板：
 
-- `docker/app.env.localbuild.example`
+- [docker/app.env.localbuild.example](/Users/zhaoguangjian/github/zgj0315/dify_custom/docker/app.env.localbuild.example)
 
 配置原则如下。
 
@@ -200,8 +205,13 @@
 
 前端容器内访问 API 时建议使用：
 
-- `CONSOLE_API_URL=http://api:5001`
-- `APP_API_URL=http://api:5001`
+- `SERVICE_API_URL=http://api:5001`
+
+但浏览器侧公开地址必须使用宿主机入口，而不是容器内域名：
+
+- `CONSOLE_API_URL=http://localhost`
+- `APP_API_URL=http://localhost`
+- `FILES_URL=http://localhost`
 
 若通过 nginx 对外暴露，则浏览器访问入口仍是：
 
@@ -265,50 +275,114 @@
 - `api -> weaviate:8080`
 - `plugin_daemon -> api:5001`
 
-## 9. 推荐实施步骤
+## 9. 已实现文件
 
-### 第一阶段：补齐编排文件
+已新增以下文件：
 
-新增：
-
-- `docker/docker-compose.local-build.yaml`
-- `docker/app.env.localbuild.example`
+- [docker/docker-compose.local-build.yaml](/Users/zhaoguangjian/github/zgj0315/dify_custom/docker/docker-compose.local-build.yaml)
+- [docker/app.env.localbuild.example](/Users/zhaoguangjian/github/zgj0315/dify_custom/docker/app.env.localbuild.example)
+- [dev/build-images](/Users/zhaoguangjian/github/zgj0315/dify_custom/dev/build-images)
+- [dev/start-docker-app](/Users/zhaoguangjian/github/zgj0315/dify_custom/dev/start-docker-app)
+- [dev/start-docker-stack](/Users/zhaoguangjian/github/zgj0315/dify_custom/dev/start-docker-stack)
+- [dev/docker-status](/Users/zhaoguangjian/github/zgj0315/dify_custom/dev/docker-status)
 
 其中：
 
 - `api/worker/beat` 使用 `build`
 - `web` 使用 `build`
 - `nginx` 使用官方镜像
-- 中间件通过外部网络或直接复用 `docker-compose.middleware.yaml` 启动结果
+- 应用层通过外部网络接入中间件启动结果
+- 外部网络固定为：
+  - `dify_default`
+  - `dify_ssrf_proxy_network`
 
-### 第二阶段：补齐启动脚本
+## 10. 启动方式
 
-新增脚本：
+### 10.1 一键启动整套 Docker 栈
 
-- `dev/build-images`
-- `dev/start-docker-app`
-- `dev/start-docker-stack`
-- `dev/docker-status`
+- `./dev/start-docker-stack`
 
-建议职责：
+该脚本会按顺序执行：
 
-- `build-images`：构建 `api` 与 `web` 镜像
-- `start-docker-app`：启动应用层容器
-- `start-docker-stack`：先起中间件，再起应用层
-- `docker-status`：输出 compose ps 与关键 URL
+1. `./dev/start-middleware`
+2. `./dev/start-docker-app`
 
-### 第三阶段：验证运行
+### 10.2 仅构建镜像
 
-验证顺序：
+- `./dev/build-images`
 
-1. `docker compose ps`
-2. `api` 日志中无 migration 异常
-3. `web` 日志中无启动异常
-4. 打开 `http://localhost/install`
-5. 完成初始化后打开 `http://localhost/apps`
-6. 检查是否仍出现 `Internal Server Error`
+### 10.3 仅启动应用层
 
-## 10. 风险点与处理建议
+前提：
+
+- 中间件已经通过 `./dev/start-middleware` 启动
+
+命令：
+
+- `./dev/start-docker-app`
+
+### 10.4 查看容器状态
+
+- `./dev/docker-status`
+
+### 10.5 默认访问入口
+
+- `http://localhost`
+- `http://localhost:5001`
+
+## 11. 关键配置说明
+
+### 11.1 应用层 compose
+
+已实现的应用层 compose 结构如下：
+
+- `api`
+- `worker`
+- `worker_beat`
+- `web`
+- `nginx`
+
+其中：
+
+- `api`、`worker`、`worker_beat` 都基于本地 [api/Dockerfile](/Users/zhaoguangjian/github/zgj0315/dify_custom/api/Dockerfile) 构建
+- `web` 基于本地 [web/Dockerfile](/Users/zhaoguangjian/github/zgj0315/dify_custom/web/Dockerfile) 构建
+- `nginx` 复用仓库现有模板和官方镜像
+
+### 11.2 环境模板
+
+已实现的环境模板 [docker/app.env.localbuild.example](/Users/zhaoguangjian/github/zgj0315/dify_custom/docker/app.env.localbuild.example) 包含以下关键配置：
+
+- 浏览器公开 API 地址：`http://localhost`
+- 容器内服务 API 地址：`http://api:5001`
+- 数据库地址：`db:5432`
+- Redis 地址：`redis:6379`
+- Weaviate 地址：`http://weaviate:8080`
+- Sandbox 地址：`http://sandbox:8194`
+- Plugin Daemon 地址：`http://plugin_daemon:5002`
+
+首次启动时，以下脚本会自动从模板复制出 `docker/app.env.localbuild`：
+
+- [dev/build-images](/Users/zhaoguangjian/github/zgj0315/dify_custom/dev/build-images)
+- [dev/start-docker-app](/Users/zhaoguangjian/github/zgj0315/dify_custom/dev/start-docker-app)
+
+### 11.3 网络约束
+
+应用层 compose 不是独立创建中间件，而是直接接入中间件已有网络：
+
+- `dify_default`
+- `dify_ssrf_proxy_network`
+
+因此中间件必须继续按当前脚本启动：
+
+- [dev/start-middleware](/Users/zhaoguangjian/github/zgj0315/dify_custom/dev/start-middleware)
+
+也就是说，中间件项目名需要保持为：
+
+- `-p dify`
+
+否则应用层容器将无法接入对应网络。
+
+## 12. 风险点与处理建议
 
 ### 10.1 插件相关配置不一致
 
@@ -349,7 +423,22 @@
 
 否则上传文件、缓存、插件工作目录容易丢失。
 
-## 11. 推荐最终形态
+## 13. 验证方式
+
+建议按以下顺序验证：
+
+1. 执行 `./dev/start-docker-stack`
+2. 执行 `./dev/docker-status`
+3. 确认 `api / worker / worker_beat / web / nginx` 均为运行态
+4. 打开 `http://localhost/install`
+5. 初始化完成后打开 `http://localhost/apps`
+6. 检查页面是否正常、是否仍出现 `Internal Server Error`
+
+静态校验已经完成：
+
+- `docker compose -f docker/docker-compose.local-build.yaml config` 已通过
+
+## 14. 推荐最终形态
 
 本地源码封装 Docker 的推荐最终形态如下：
 
@@ -359,7 +448,7 @@
 - 前端镜像：基于 [web/Dockerfile](/Users/zhaoguangjian/github/zgj0315/dify_custom/web/Dockerfile) 构建
 - 对外入口：统一由 `nginx` 暴露 `http://localhost`
 
-## 12. 结论
+## 15. 结论
 
 最合适的实现方式不是重写整套 Docker 方案，而是：
 
@@ -370,9 +459,8 @@
 
 这样改动最小，落地最快，也最接近后续部署形态。
 
-如果继续推进实施，下一步应直接落地：
+当前仓库中这套方法已经对应到实际文件，可以直接执行：
 
-1. `docker/docker-compose.local-build.yaml`
-2. `docker/app.env.localbuild.example`
-3. `dev/start-docker-stack`
-4. 本地构建与启动验证
+1. `./dev/start-docker-stack`
+2. `./dev/docker-status`
+3. 打开 `http://localhost`
