@@ -218,6 +218,9 @@ mise.toml
 
 # PWA generated files
 web/public/sw.js
+
+# Offline release bundles
+/release/
 web/public/sw.js.map
 web/public/workbox-*.js
 web/public/workbox-*.js.map

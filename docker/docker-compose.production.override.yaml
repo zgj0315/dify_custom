@@ -1,0 +1,16 @@
+services:
+  api:
+    image: __DIFY_RELEASE_API_IMAGE__
+    pull_policy: never
+
+  worker:
+    image: __DIFY_RELEASE_API_IMAGE__
+    pull_policy: never
+
+  worker_beat:
+    image: __DIFY_RELEASE_API_IMAGE__
+    pull_policy: never
+
+  web:
+    image: __DIFY_RELEASE_WEB_IMAGE__
+    pull_policy: never
