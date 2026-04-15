@@ -1,0 +1,12 @@
+services:
+  api:
+    image: ${DOCKER_REGISTRY:-local}/${API_IMAGE_NAME:-dify-api}:${IMAGE_TAG:-dev}
+
+  worker:
+    image: ${DOCKER_REGISTRY:-local}/${API_IMAGE_NAME:-dify-api}:${IMAGE_TAG:-dev}
+
+  worker_beat:
+    image: ${DOCKER_REGISTRY:-local}/${API_IMAGE_NAME:-dify-api}:${IMAGE_TAG:-dev}
+
+  web:
+    image: ${DOCKER_REGISTRY:-local}/${WEB_IMAGE_NAME:-dify-web}:${IMAGE_TAG:-dev}
