@@ -6,7 +6,6 @@ import subprocess
 import tarfile
 from pathlib import Path
 
-
 REPO_ROOT = Path(__file__).resolve().parents[4]
 BUILD_SCRIPT = REPO_ROOT / "docker" / "offline" / "build-offline-package.sh"
 INSTALL_SCRIPT = REPO_ROOT / "docker" / "offline" / "install-offline.sh"
